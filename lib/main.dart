@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -215,6 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _searchGoogleScholar = false; // Google Scholar Embedded Links
   String _llmOptimizedQuery = ''; // LLM-optimized search query
   String _searchPipelineStage = ''; // Active IQO pipeline stage label
+  String _searchSortMode = 'relevance'; // 'relevance' | 'recent'
 
   // --- Ollama Settings ---
   String _ollamaIp = 'http://localhost:11434';
@@ -2821,6 +2823,38 @@ If no chips are appropriate (open-ended answer is better), return an empty chips
                             color: AppTheme.primary),
                       ),
                     ),
+                    // ── Sort toggle (paper results only) ───────────────────
+                    if (!_isPatentSearch) ...[
+                      const SizedBox(width: 12),
+                      Container(
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceHover,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppTheme.border),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildSortChip(
+                              label: 'Relevance',
+                              icon: Icons.auto_awesome_rounded,
+                              mode: 'relevance',
+                            ),
+                            Container(
+                              width: 1,
+                              height: 16,
+                              color: AppTheme.border,
+                            ),
+                            _buildSortChip(
+                              label: 'Recent',
+                              icon: Icons.calendar_today_rounded,
+                              mode: 'recent',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const Spacer(),
                     if (!_isPatentSearch && _paperSearchResults.isNotEmpty)
                       OutlinedButton.icon(
@@ -3021,35 +3055,102 @@ If no chips are appropriate (open-ended answer is better), return an empty chips
                       .toList(),
                 )
               else
-                Column(
-                  children: _paperSearchResults
-                      .map((paper) => _buildPaperItem(
-                            paper['citation'] ?? '',
-                            paper['url'] ?? '',
-                            methodology: paper['methodology'],
-                            year: _extractYear(paper['citation'] ?? ''),
-                            repCount: int.tryParse(paper['_rep_count'] ?? '0'),
-                            onAdd: () {
-                              _importSearchResultsToDatabase([paper],
-                                  topic: _searchController.text.trim());
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Added to Database & Trend Analysis'),
-                                    backgroundColor: AppTheme.success,
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            },
-                          ))
-                      .toList(),
-                ),
+                Builder(builder: (context) {
+                  // Apply sort mode without mutating the stored list
+                  final List<Map<String, String>> displayList =
+                      List<Map<String, String>>.from(_paperSearchResults);
+                  if (_searchSortMode == 'recent') {
+                    displayList.sort((a, b) {
+                      final int aYear = _extractYearInt(a['citation'] ?? '');
+                      final int bYear = _extractYearInt(b['citation'] ?? '');
+                      return bYear.compareTo(aYear); // newest first
+                    });
+                  }
+                  // 'relevance' keeps the power-law order from the pipeline
+                  return Column(
+                    children: displayList
+                        .map((paper) => _buildPaperItem(
+                              paper['citation'] ?? '',
+                              paper['url'] ?? '',
+                              methodology: paper['methodology'],
+                              year: _extractYear(paper['citation'] ?? ''),
+                              repCount: int.tryParse(paper['_rep_count'] ?? '0'),
+                              onAdd: () {
+                                _importSearchResultsToDatabase([paper],
+                                    topic: _searchController.text.trim());
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Added to Database & Trend Analysis'),
+                                      backgroundColor: AppTheme.success,
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              },
+                            ))
+                        .toList(),
+                  );
+                }),
             ],
           ),
         ),
       ),
     );
+  }
+
+  /// Builds one pill segment of the Relevance / Recent sort toggle.
+  Widget _buildSortChip({
+    required String label,
+    required IconData icon,
+    required String mode,
+  }) {
+    final bool active = _searchSortMode == mode;
+    return GestureDetector(
+      onTap: () => setState(() => _searchSortMode = mode),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeInOut,
+        padding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: active
+              ? AppTheme.primary.withValues(alpha: 0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(7),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 11,
+              color: active ? AppTheme.primary : AppTheme.textTertiary,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: GoogleFonts.interTight(
+                fontSize: 11,
+                fontWeight:
+                    active ? FontWeight.w700 : FontWeight.w500,
+                color: active
+                    ? AppTheme.primary
+                    : AppTheme.textTertiary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Extracts the publication year from a citation string as an integer.
+  /// Returns 0 when no year is found (sorts to the bottom in Recent mode).
+  int _extractYearInt(String citation) {
+    final m = RegExp(r'\b((?:19|20|21)\d{2})\b').firstMatch(citation);
+    if (m == null) return 0;
+    return int.tryParse(m.group(1) ?? '') ?? 0;
   }
 
   String _formatHistoryTimestamp(String? raw) {
@@ -3175,7 +3276,7 @@ If no chips are appropriate (open-ended answer is better), return an empty chips
       // ── Stage 5: Big M Matching with Input ──────────────────────────────
       // Strict priority: Year (M=10000) > Repetition (M=100) > Input Match (M=1)
       setState(() => _searchPipelineStage =
-          'Stage 5 — Big M Scoring: Year > Repetition > Input Match...');
+          'Stage 5 — Power-law Scoring: (InputMatch^α)×(Rep^β)×(Recency^γ)...');
       final scoredResults = _applyBigMScoring(dedupedResults, query);
 
       setState(() {
@@ -3410,25 +3511,37 @@ Return valid JSON with this exact structure:
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // STAGE 5 — BIG M SCORING  (Matching with Input)
+  // STAGE 5 — POWER-LAW SCORING  (Matching with Input)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /// Scores and sorts every de-duplicated paper using the Big M formulation:
+  /// Scores and sorts every de-duplicated paper using the multiplicative
+  /// power-law formula:
   ///
-  ///   Score = Year_score × M_Y  +  Rep_count × M_R  +  Input_match × M_I
+  ///   Score = (InputMatch ^ α) × (Rep ^ β) × (RecencyDecay(Year) ^ γ)
   ///
-  ///   M_Y = 10 000   ← Year recency is the DOMINANT criterion
-  ///   M_R =    100   ← Repetition index is the SECONDARY criterion
-  ///   M_I =      1   ← Original-input keyword overlap is TERTIARY
+  /// Exponent weights:
+  ///   α = 0.4  — input-match exponent   (tertiary influence)
+  ///   β = 0.6  — repetition exponent    (secondary influence)
+  ///   γ = 1.0  — recency-decay exponent (primary / dominant influence)
   ///
-  /// The constants enforce strict priority: Year > Repetition > Input Match.
-  /// Any 1-year difference always outranks any repetition advantage, and any
-  /// repetition advantage always outranks any keyword-overlap advantage.
+  /// RecencyDecay(year) = exp(−λ × max(0, currentYear − year))
+  ///   λ = 0.1  → half-life ≈ 6.9 years
+  ///             (a paper 7 yrs old scores ≈ 0.50 decay vs 1.0 for current)
+  ///
+  /// Smoothing: InputMatch is offset by +1 (floor = 1) so that a paper with
+  /// zero keyword overlap still participates but ranks below any paper that
+  /// matches even one keyword.  Rep is always ≥ 1 (minimum one retrieval).
+  ///
+  /// The multiplicative form means all three signals must be strong for a
+  /// paper to rank at the top — unlike an additive model, a very old but
+  /// highly-retrieved paper cannot dominate a recent, relevant result.
   List<Map<String, String>> _applyBigMScoring(
       List<Map<String, String>> papers, String originalInput) {
-    const double bigMYear = 10000.0; // dominant
-    const double bigMRep = 100.0;   // secondary
-    const double bigMInput = 1.0;   // tertiary
+    // ── Exponent weights ────────────────────────────────────────────────────
+    const double alpha  = 0.4;   // input-match exponent
+    const double beta   = 0.6;   // repetition exponent
+    const double gamma  = 1.0;   // recency-decay exponent (dominant)
+    const double lambda = 0.1;   // exponential decay rate (per year)
 
     final int currentYear = DateTime.now().year;
 
@@ -3443,50 +3556,55 @@ Return valid JSON with this exact structure:
       final result = Map<String, String>.from(paper);
       final String citationLower = (paper['citation'] ?? '').toLowerCase();
 
-      // ── Year score: linear 0–100, newer paper = higher score ─────────────
-      double yearScore = 50.0; // neutral default when year is unknown
+      // ── InputMatch: keyword overlap count, floored at 1 (smooth zero) ─────
+      final double rawInputMatch = inputKeywords.fold(
+          0.0,
+          (double sum, String kw) =>
+              sum + (citationLower.contains(kw) ? 1.0 : 0.0));
+      final double inputMatch = rawInputMatch + 1.0; // +1 floor → never 0
+
+      // ── Rep: cross-query retrieval count (always ≥ 1) ────────────────────
+      final double rep =
+          double.tryParse(paper['_rep_count'] ?? '1') ?? 1.0;
+
+      // ── RecencyDecay: exponential decay from current year ─────────────────
+      //   recencyDecay ∈ (0, 1]  — 1.0 for current year, decays with age
+      double recencyDecay = 0.5; // neutral default for unknown/missing year
       final yearMatch = RegExp(r'\b((?:19|20|21)\d{2})\b')
           .firstMatch(paper['citation'] ?? '');
       if (yearMatch != null) {
         final int? y = int.tryParse(yearMatch.group(1) ?? '');
         if (y != null && y >= 1900 && y <= currentYear + 1) {
-          yearScore =
-              ((y - 1900) / (currentYear - 1900)).clamp(0.0, 1.0) * 100.0;
+          final double age =
+              (currentYear - y).toDouble().clamp(0.0, 200.0);
+          recencyDecay = math.exp(-lambda * age);
         }
       }
 
-      // ── Repetition score: raw cross-query retrieval count ────────────────
-      final double repCount =
-          double.tryParse(paper['_rep_count'] ?? '1') ?? 1.0;
+      // ── Multiplicative power-law composite score ───────────────────────────
+      //   Score = (InputMatch^α) × (Rep^β) × (RecencyDecay^γ)
+      final double score =
+          math.pow(inputMatch,   alpha ).toDouble() *
+          math.pow(rep,          beta  ).toDouble() *
+          math.pow(recencyDecay, gamma ).toDouble();
 
-      // ── Input match score: keyword overlap with original user query ───────
-      final double inputMatchScore = inputKeywords.fold(
-          0.0,
-          (double sum, String kw) =>
-              sum + (citationLower.contains(kw) ? 1.0 : 0.0));
-
-      // ── Big M composite score ─────────────────────────────────────────────
-      final double bigMScore = (yearScore * bigMYear) +
-          (repCount * bigMRep) +
-          (inputMatchScore * bigMInput);
-
-      result['_big_m_score'] = bigMScore.toStringAsFixed(2);
-      result['_year_score'] = yearScore.toStringAsFixed(1);
-      result['_rep_count'] = repCount.toStringAsFixed(0);
-      result['_input_match'] = inputMatchScore.toStringAsFixed(0);
+      result['_big_m_score'] = score.toStringAsFixed(6);
+      result['_year_score']  = recencyDecay.toStringAsFixed(4); // decay value
+      result['_rep_count']   = rep.toStringAsFixed(0);
+      result['_input_match'] = rawInputMatch.toStringAsFixed(0);
       return result;
     }).toList();
 
-    // Sort descending by Big M score
+    // Sort descending by composite score
     scored.sort((a, b) {
       final double aScore = double.tryParse(a['_big_m_score'] ?? '0') ?? 0.0;
       final double bScore = double.tryParse(b['_big_m_score'] ?? '0') ?? 0.0;
       return bScore.compareTo(aScore);
     });
 
-    print('DEBUG: Big M scoring complete. '
+    print('DEBUG: Power-law scoring done. '
         'Top score: ${scored.isNotEmpty ? scored.first['_big_m_score'] : "N/A"}, '
-        'Total papers: ${scored.length}');
+        'Total: ${scored.length}');
     return scored;
   }
 

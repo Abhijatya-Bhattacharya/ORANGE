@@ -1,4 +1,3 @@
-# OMICRON - ORANGE
-
-Copying is stricly prohibited
-MSIT - G34 PROJECT
+# omicron - ORANGE
+COPYING PROHIBITED
+© G34 MSIT
