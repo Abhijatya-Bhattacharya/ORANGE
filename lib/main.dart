@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,10 +16,10 @@ import 'screens/database_screen.dart';
 import 'screens/trend_analysis_screen.dart';
 
 class AppTheme {
-  static const Color primary = Color(0xFFE8650A);
-  static const Color primaryLight = Color(0xFFFF8533);
-  static const Color primaryDark = Color(0xFFBF4F00);
-  static const Color primarySubtle = Color(0xFFFFF0E6);
+  static const Color primary = Color(0xFF8B2D3A);
+  static const Color primaryLight = Color(0xFFAD4455);
+  static const Color primaryDark = Color(0xFF6B1F2C);
+  static const Color primarySubtle = Color(0xFFF5EAEC);
 
   static const Color background = Color(0xFFF2F0ED);
   static const Color backgroundAlt = Color(0xFFEAE7E3);
@@ -157,16 +156,16 @@ String _sanitizeForPdf(String text) {
 
 // --- Main Application ---
 void main() {
-  runApp(const OrangeApp());
+  runApp(const OmicronApp());
 }
 
-class OrangeApp extends StatelessWidget {
-  const OrangeApp({super.key});
+class OmicronApp extends StatelessWidget {
+  const OmicronApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ORANGE',
+      title: 'Omicron',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.light,
@@ -216,17 +215,6 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _searchGoogleScholar = false; // Google Scholar Embedded Links
   String _llmOptimizedQuery = ''; // LLM-optimized search query
   String _searchPipelineStage = ''; // Active IQO pipeline stage label
-  String _searchSortMode = 'relevance'; // 'relevance' | 'recent'
-
-  // --- Literature Overview Engine ---
-  bool _useOrangePipeline = true; // true=Orange IQO, false=Omicron legacy
-
-  // --- Search Filters ---
-  bool _showFilterPanel = false;
-  int _filterYearFrom = 2000;
-  int _filterYearTo = 0; // 0 = current year (set in initState)
-  final Set<String> _filterMethodologies = {};
-  int _filterMinRepCount = 1;
 
   // --- Ollama Settings ---
   String _ollamaIp = 'http://localhost:11434';
@@ -267,7 +255,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _filterYearTo = DateTime.now().year;
     _loadAvailableModels();
     _loadWorkHistory();
     _loadResearchPapers();
@@ -367,7 +354,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 24),
           Tooltip(
-            message: 'Literature Overview',
+            message: 'Literature Review',
             preferBelow: false,
             waitDuration: const Duration(milliseconds: 400),
             textStyle:
@@ -427,7 +414,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const Spacer(),
           Text(
-            'v3.4.0',
+            'v2.0.0',
             style: GoogleFonts.interTight(
               fontSize: 10,
               color: Colors.white24,
@@ -574,7 +561,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Row(
                   children: [
-                    Text('ORANGE',
+                    Text('Omicron',
                         style: GoogleFonts.interTight(
                             fontSize: 12,
                             color: AppTheme.textSecondary,
@@ -584,7 +571,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Icon(Icons.chevron_right,
                           size: 14, color: AppTheme.textTertiary),
                     ),
-                    Text('Literature Overview',
+                    Text('Literature Review',
                         style: GoogleFonts.interTight(
                             fontSize: 12,
                             color: AppTheme.textPrimary,
@@ -601,7 +588,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Literature Overview',
+                          'Literature Review',
                           style: AppTheme.displayLarge(),
                         ),
                         const SizedBox(height: 6),
@@ -853,7 +840,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       border: Border.all(color: AppTheme.primary.withOpacity(0.15)),
                     ),
                     child: Text(
-                      'Hello! I\'m your AI Research Advisor. Instead of a generic overview, I\'ll ask you a few targeted questions about your research to tailor the literature overview specifically to your needs.\n\nLet\'s start with your research topic.',
+                      'Hello! I\'m your AI Research Advisor. Instead of a generic overview, I\'ll ask you a few targeted questions about your research to tailor the literature review specifically to your needs.\n\nLet\'s start with your research topic.',
                       style: GoogleFonts.interTight(
                         fontSize: 14,
                         color: AppTheme.textPrimary,
@@ -886,77 +873,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       'e.g. The impact of transformer models on NLP efficiency',
                       _topicController,
                       icon: Icons.search),
-                  const SizedBox(height: 24),
-                  // ── Search Engine Toggle ─────────────────────────────────
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceHover,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.border),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.hub_rounded,
-                            size: 15, color: AppTheme.textSecondary),
-                        const SizedBox(width: 8),
-                        Text(
-                          'ENGINE',
-                          style: GoogleFonts.interTight(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textTertiary,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        // Engine selector pill
-                        Container(
-                          height: 30,
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            color: AppTheme.background,
-                            borderRadius: BorderRadius.circular(9),
-                            border: Border.all(color: AppTheme.border),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _buildEngineChip(
-                                label: 'Orange',
-                                icon: Icons.auto_awesome_rounded,
-                                active: _useOrangePipeline,
-                                onTap: () => setState(
-                                    () => _useOrangePipeline = true),
-                              ),
-                              const SizedBox(width: 2),
-                              _buildEngineChip(
-                                label: 'Omicron',
-                                icon: Icons.history_edu_rounded,
-                                active: !_useOrangePipeline,
-                                onTap: () => setState(
-                                    () => _useOrangePipeline = false),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            _useOrangePipeline
-                                ? 'IQO · 10-query multiplexer'
-                                : 'Legacy single-query fetch · year sort',
-                            style: GoogleFonts.interTight(
-                              fontSize: 11,
-                              color: AppTheme.textTertiary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 28),
                   // Start button
                   Row(
                     children: [
@@ -1881,7 +1798,7 @@ class _HomeScreenState extends State<HomeScreen> {
               });
             },
             icon: const Icon(Icons.add_circle_outline, size: 18),
-            label: Text('New Literature Overview',
+            label: Text('New Literature Review',
                 style: GoogleFonts.interTight(
                     fontSize: 13, fontWeight: FontWeight.w600)),
             style: OutlinedButton.styleFrom(
@@ -2036,7 +1953,7 @@ class _HomeScreenState extends State<HomeScreen> {
             .join('\n\n');
 
     final prompt = '''
-You are an expert academic research advisor conducting a structured interview to understand a researcher's needs before writing a personalized literature overview.
+You are an expert academic research advisor conducting a structured interview to understand a researcher's needs before writing a personalized literature review.
 
 Research Topic: "$topic"
 Question $questionNumber of $totalQuestions
@@ -2150,14 +2067,14 @@ If no chips are appropriate (open-ended answer is better), return an empty chips
       case 6:
         return 'Ask one final clarifying question about any specific gaps, controversies, or emerging areas they want the review to highlight — make it specific to the topic and informed by all previous answers.';
       default:
-        return 'Ask a clarifying question that will help personalize the literature overview.';
+        return 'Ask a clarifying question that will help personalize the literature review.';
     }
   }
 
   String _getFallbackQuestion(int n, String topic) {
     final fallbacks = [
       'What specific aspect or sub-domain of "$topic" are you most interested in exploring?',
-      'Who is the primary audience for this literature overview, and what is your main purpose?',
+      'Who is the primary audience for this literature review, and what is your main purpose?',
       'Which time period of research on "$topic" is most relevant to your needs?',
       'Are there specific methodologies or application areas within "$topic" you want to focus on or exclude?',
       'What level of technical depth do you need — introductory, intermediate, or expert?',
@@ -2335,7 +2252,7 @@ If no chips are appropriate (open-ended answer is better), return an empty chips
                 // Breadcrumb
                 Row(
                   children: [
-                    Text('ORANGE',
+                    Text('Omicron',
                         style: GoogleFonts.interTight(
                             fontSize: 12,
                             color: AppTheme.textSecondary,
@@ -2515,41 +2432,6 @@ If no chips are appropriate (open-ended answer is better), return an empty chips
                                         ),
                                       ),
                               ),
-                              const SizedBox(width: 8),
-                              // Filter button
-                              Tooltip(
-                                message: 'Filter results',
-                                child: AnimatedContainer(
-                                  duration:
-                                      const Duration(milliseconds: 200),
-                                  decoration: BoxDecoration(
-                                    color: _showFilterPanel
-                                        ? AppTheme.primarySubtle
-                                        : AppTheme.surfaceHover,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: _showFilterPanel
-                                          ? AppTheme.primary
-                                              .withValues(alpha: 0.4)
-                                          : AppTheme.border,
-                                    ),
-                                  ),
-                                  child: IconButton(
-                                    onPressed: () => setState(() =>
-                                        _showFilterPanel =
-                                            !_showFilterPanel),
-                                    icon: Icon(
-                                      Icons.tune_rounded,
-                                      size: 20,
-                                      color: _showFilterPanel
-                                          ? AppTheme.primary
-                                          : AppTheme.textSecondary,
-                                    ),
-                                    padding: const EdgeInsets.all(10),
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                           if (!_isPatentSearch) ...[
@@ -2643,15 +2525,6 @@ If no chips are appropriate (open-ended answer is better), return an empty chips
                               ],
                             ),
                           ],
-                          // ── Collapsible Filter Panel ─────────────────────
-                          AnimatedCrossFade(
-                            duration: const Duration(milliseconds: 250),
-                            crossFadeState: _showFilterPanel
-                                ? CrossFadeState.showFirst
-                                : CrossFadeState.showSecond,
-                            firstChild: _buildFilterPanel(),
-                            secondChild: const SizedBox.shrink(),
-                          ),
                           if (_searchError.isNotEmpty) ...[
                             const SizedBox(height: 12),
                             Text(
@@ -2690,7 +2563,7 @@ If no chips are appropriate (open-ended answer is better), return an empty chips
                 // Breadcrumb
                 Row(
                   children: [
-                    Text('ORANGE',
+                    Text('Omicron',
                         style: GoogleFonts.interTight(
                             fontSize: 12,
                             color: AppTheme.textSecondary,
@@ -2931,11 +2804,6 @@ If no chips are appropriate (open-ended answer is better), return an empty chips
                     'RESULTS',
                     style: AppTheme.labelSmall(),
                   ),
-                  // Active filter chips
-                  if (!_isPatentSearch && _hasActiveFilters()) ...[
-                    const SizedBox(width: 8),
-                    ..._buildActiveFilterChips(),
-                  ],
                   if (currentResults.isNotEmpty) ...[
                     const SizedBox(width: 8),
                     Container(
@@ -2953,38 +2821,6 @@ If no chips are appropriate (open-ended answer is better), return an empty chips
                             color: AppTheme.primary),
                       ),
                     ),
-                    // ── Sort toggle (paper results only) ───────────────────
-                    if (!_isPatentSearch) ...[
-                      const SizedBox(width: 12),
-                      Container(
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: AppTheme.surfaceHover,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppTheme.border),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildSortChip(
-                              label: 'Relevance',
-                              icon: Icons.auto_awesome_rounded,
-                              mode: 'relevance',
-                            ),
-                            Container(
-                              width: 1,
-                              height: 16,
-                              color: AppTheme.border,
-                            ),
-                            _buildSortChip(
-                              label: 'Recent',
-                              icon: Icons.calendar_today_rounded,
-                              mode: 'recent',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                     const Spacer(),
                     if (!_isPatentSearch && _paperSearchResults.isNotEmpty)
                       OutlinedButton.icon(
@@ -3185,436 +3021,33 @@ If no chips are appropriate (open-ended answer is better), return an empty chips
                       .toList(),
                 )
               else
-                Builder(builder: (context) {
-                  // Apply filters + sort without mutating the stored list
-                  List<Map<String, String>> displayList =
-                      List<Map<String, String>>.from(_paperSearchResults);
-
-                  // ── Year filter ──────────────────────────────────────────
-                  displayList = displayList.where((p) {
-                    final int y = _extractYearInt(p['citation'] ?? '');
-                    if (y == 0) return true; // unknown year always shown
-                    return y >= _filterYearFrom && y <= _filterYearTo;
-                  }).toList();
-
-                  // ── Methodology filter ───────────────────────────────────
-                  if (_filterMethodologies.isNotEmpty) {
-                    displayList = displayList.where((p) {
-                      final String m = p['methodology'] ?? '';
-                      return _filterMethodologies.contains(m);
-                    }).toList();
-                  }
-
-                  // ── Min rep count filter ─────────────────────────────────
-                  if (_filterMinRepCount > 1) {
-                    displayList = displayList.where((p) {
-                      final int r =
-                          int.tryParse(p['_rep_count'] ?? '1') ?? 1;
-                      return r >= _filterMinRepCount;
-                    }).toList();
-                  }
-
-                  // ── Sort ─────────────────────────────────────────────────
-                  if (_searchSortMode == 'recent') {
-                    displayList.sort((a, b) {
-                      final int aYear = _extractYearInt(a['citation'] ?? '');
-                      final int bYear = _extractYearInt(b['citation'] ?? '');
-                      return bYear.compareTo(aYear);
-                    });
-                  }
-                  // 'relevance' keeps power-law order from the pipeline
-                  return Column(
-                    children: displayList
-                        .map((paper) => _buildPaperItem(
-                              paper['citation'] ?? '',
-                              paper['url'] ?? '',
-                              methodology: paper['methodology'],
-                              year: _extractYear(paper['citation'] ?? ''),
-                              repCount: int.tryParse(paper['_rep_count'] ?? '0'),
-                              onAdd: () {
-                                _importSearchResultsToDatabase([paper],
-                                    topic: _searchController.text.trim());
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Added to Database & Trend Analysis'),
-                                      backgroundColor: AppTheme.success,
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                }
-                              },
-                            ))
-                        .toList(),
-                  );
-                }),
+                Column(
+                  children: _paperSearchResults
+                      .map((paper) => _buildPaperItem(
+                            paper['citation'] ?? '',
+                            paper['url'] ?? '',
+                            methodology: paper['methodology'],
+                            year: _extractYear(paper['citation'] ?? ''),
+                            repCount: int.tryParse(paper['_rep_count'] ?? '0'),
+                            onAdd: () {
+                              _importSearchResultsToDatabase([paper],
+                                  topic: _searchController.text.trim());
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Added to Database & Trend Analysis'),
+                                    backgroundColor: AppTheme.success,
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                          ))
+                      .toList(),
+                ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  /// Builds one pill segment of the Relevance / Recent sort toggle.
-  Widget _buildSortChip({
-    required String label,
-    required IconData icon,
-    required String mode,
-  }) {
-    final bool active = _searchSortMode == mode;
-    return GestureDetector(
-      onTap: () => setState(() => _searchSortMode = mode),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeInOut,
-        padding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: active
-              ? AppTheme.primary.withValues(alpha: 0.12)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(7),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 11,
-              color: active ? AppTheme.primary : AppTheme.textTertiary,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: GoogleFonts.interTight(
-                fontSize: 11,
-                fontWeight:
-                    active ? FontWeight.w700 : FontWeight.w500,
-                color: active
-                    ? AppTheme.primary
-                    : AppTheme.textTertiary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Extracts the publication year from a citation string as an integer.
-  /// Returns 0 when no year is found (sorts to the bottom in Recent mode).
-  int _extractYearInt(String citation) {
-    final m = RegExp(r'\b((?:19|20|21)\d{2})\b').firstMatch(citation);
-    if (m == null) return 0;
-    return int.tryParse(m.group(1) ?? '') ?? 0;
-  }
-
-  // ── Engine chip helper ────────────────────────────────────────────────────
-  Widget _buildEngineChip({
-    required String label,
-    required IconData icon,
-    required bool active,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: active
-              ? AppTheme.primary.withValues(alpha: 0.12)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 11,
-                color: active ? AppTheme.primary : AppTheme.textTertiary),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: GoogleFonts.interTight(
-                fontSize: 11,
-                fontWeight:
-                    active ? FontWeight.w700 : FontWeight.w500,
-                color: active
-                    ? AppTheme.primary
-                    : AppTheme.textTertiary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Filter panel ─────────────────────────────────────────────────────────
-  static const List<String> _methodologyOptions = [
-    'Research Paper',
-    'Survey',
-    'Experimental',
-    'Clinical',
-    'Theoretical',
-    'Review',
-  ];
-
-  Widget _buildFilterPanel() {
-    final int currentYear = DateTime.now().year;
-    return Container(
-      margin: const EdgeInsets.only(top: 14),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceHover,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.tune_rounded,
-                  size: 13, color: AppTheme.textSecondary),
-              const SizedBox(width: 6),
-              Text(
-                'FILTERS',
-                style: GoogleFonts.interTight(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textTertiary,
-                  letterSpacing: 1.0,
-                ),
-              ),
-              const Spacer(),
-              // Reset button
-              TextButton.icon(
-                onPressed: () => setState(() {
-                  _filterYearFrom = 2000;
-                  _filterYearTo = currentYear;
-                  _filterMethodologies.clear();
-                  _filterMinRepCount = 1;
-                }),
-                icon: const Icon(Icons.refresh_rounded, size: 12),
-                label: Text('Reset',
-                    style: GoogleFonts.interTight(
-                        fontSize: 11, fontWeight: FontWeight.w600)),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.textSecondary,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // ── Year Range ────────────────────────────────────────────────────
-          Text('YEAR RANGE',
-              style: GoogleFonts.interTight(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textTertiary,
-                  letterSpacing: 1.0)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text('$_filterYearFrom',
-                  style: GoogleFonts.interTight(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primary)),
-              Expanded(
-                child: RangeSlider(
-                  values: RangeValues(
-                    _filterYearFrom.toDouble(),
-                    _filterYearTo.toDouble(),
-                  ),
-                  min: 1990,
-                  max: currentYear.toDouble(),
-                  divisions: currentYear - 1990,
-                  activeColor: AppTheme.primary,
-                  inactiveColor: AppTheme.border,
-                  onChanged: (RangeValues v) {
-                    setState(() {
-                      _filterYearFrom = v.start.round();
-                      _filterYearTo = v.end.round();
-                    });
-                  },
-                ),
-              ),
-              Text('$_filterYearTo',
-                  style: GoogleFonts.interTight(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primary)),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // ── Methodology ───────────────────────────────────────────────────
-          Text('METHODOLOGY',
-              style: GoogleFonts.interTight(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textTertiary,
-                  letterSpacing: 1.0)),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: _methodologyOptions.map((m) {
-              final bool selected = _filterMethodologies.contains(m);
-              return GestureDetector(
-                onTap: () => setState(() {
-                  if (selected) {
-                    _filterMethodologies.remove(m);
-                  } else {
-                    _filterMethodologies.add(m);
-                  }
-                }),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? AppTheme.primary.withValues(alpha: 0.12)
-                        : AppTheme.surface,
-                    borderRadius: BorderRadius.circular(7),
-                    border: Border.all(
-                      color: selected
-                          ? AppTheme.primary.withValues(alpha: 0.4)
-                          : AppTheme.border,
-                    ),
-                  ),
-                  child: Text(m,
-                      style: GoogleFonts.interTight(
-                          fontSize: 11,
-                          fontWeight: selected
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: selected
-                              ? AppTheme.primary
-                              : AppTheme.textSecondary)),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 14),
-
-          // ── Min Retrieval Count ───────────────────────────────────────────
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('MIN RETRIEVAL COUNT',
-                        style: GoogleFonts.interTight(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textTertiary,
-                            letterSpacing: 1.0)),
-                    const SizedBox(height: 4),
-                    Text(
-                      _filterMinRepCount == 1
-                          ? 'Show all'
-                          : 'Retrieved by \u2265$_filterMinRepCount queries',
-                      style: GoogleFonts.interTight(
-                          fontSize: 11, color: AppTheme.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                width: 180,
-                child: Slider(
-                  value: _filterMinRepCount.toDouble(),
-                  min: 1,
-                  max: 10,
-                  divisions: 9,
-                  activeColor: AppTheme.primary,
-                  inactiveColor: AppTheme.border,
-                  label: '$_filterMinRepCount',
-                  onChanged: (v) =>
-                      setState(() => _filterMinRepCount = v.round()),
-                ),
-              ),
-              Text('$_filterMinRepCount×',
-                  style: GoogleFonts.interTight(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primary)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Returns true when any filter is set to a non-default value.
-  bool _hasActiveFilters() {
-    final int currentYear = DateTime.now().year;
-    return _filterYearFrom > 2000 ||
-        _filterYearTo < currentYear ||
-        _filterMethodologies.isNotEmpty ||
-        _filterMinRepCount > 1;
-  }
-
-  /// Builds small orange chips for each active filter, shown in results header.
-  List<Widget> _buildActiveFilterChips() {
-    final int currentYear = DateTime.now().year;
-    final chips = <Widget>[];
-    // Year chip
-    if (_filterYearFrom > 2000 || _filterYearTo < currentYear) {
-      chips.add(_activeFilterChip(
-          '$_filterYearFrom\u2013$_filterYearTo',
-          onRemove: () => setState(() {
-                _filterYearFrom = 2000;
-                _filterYearTo = currentYear;
-              })));
-    }
-    // Methodology chips
-    for (final m in _filterMethodologies) {
-      chips.add(_activeFilterChip(m,
-          onRemove: () =>
-              setState(() => _filterMethodologies.remove(m))));
-    }
-    // Rep count chip
-    if (_filterMinRepCount > 1) {
-      chips.add(_activeFilterChip('\u2265$_filterMinRepCount\u00d7 retrieved',
-          onRemove: () => setState(() => _filterMinRepCount = 1)));
-    }
-    return chips;
-  }
-
-  Widget _activeFilterChip(String label, {required VoidCallback onRemove}) {
-    return Container(
-      padding: const EdgeInsets.only(left: 8, right: 4, top: 3, bottom: 3),
-      decoration: BoxDecoration(
-        color: AppTheme.primarySubtle,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label,
-              style: GoogleFonts.interTight(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primary)),
-          const SizedBox(width: 2),
-          GestureDetector(
-            onTap: onRemove,
-            child: const Icon(Icons.close_rounded,
-                size: 12, color: AppTheme.primary),
-          ),
-        ],
       ),
     );
   }
@@ -3742,7 +3175,7 @@ If no chips are appropriate (open-ended answer is better), return an empty chips
       // ── Stage 5: Big M Matching with Input ──────────────────────────────
       // Strict priority: Year (M=10000) > Repetition (M=100) > Input Match (M=1)
       setState(() => _searchPipelineStage =
-          'Stage 5 — Power-law Scoring: (InputMatch^α)×(Rep^β)×(Recency^γ)...');
+          'Stage 5 — Big M Scoring: Year > Repetition > Input Match...');
       final scoredResults = _applyBigMScoring(dedupedResults, query);
 
       setState(() {
@@ -3977,37 +3410,25 @@ Return valid JSON with this exact structure:
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // STAGE 5 — POWER-LAW SCORING  (Matching with Input)
+  // STAGE 5 — BIG M SCORING  (Matching with Input)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /// Scores and sorts every de-duplicated paper using the multiplicative
-  /// power-law formula:
+  /// Scores and sorts every de-duplicated paper using the Big M formulation:
   ///
-  ///   Score = (InputMatch ^ α) × (Rep ^ β) × (RecencyDecay(Year) ^ γ)
+  ///   Score = Year_score × M_Y  +  Rep_count × M_R  +  Input_match × M_I
   ///
-  /// Exponent weights:
-  ///   α = 0.4  — input-match exponent   (tertiary influence)
-  ///   β = 0.6  — repetition exponent    (secondary influence)
-  ///   γ = 1.0  — recency-decay exponent (primary / dominant influence)
+  ///   M_Y = 10 000   ← Year recency is the DOMINANT criterion
+  ///   M_R =    100   ← Repetition index is the SECONDARY criterion
+  ///   M_I =      1   ← Original-input keyword overlap is TERTIARY
   ///
-  /// RecencyDecay(year) = exp(−λ × max(0, currentYear − year))
-  ///   λ = 0.1  → half-life ≈ 6.9 years
-  ///             (a paper 7 yrs old scores ≈ 0.50 decay vs 1.0 for current)
-  ///
-  /// Smoothing: InputMatch is offset by +1 (floor = 1) so that a paper with
-  /// zero keyword overlap still participates but ranks below any paper that
-  /// matches even one keyword.  Rep is always ≥ 1 (minimum one retrieval).
-  ///
-  /// The multiplicative form means all three signals must be strong for a
-  /// paper to rank at the top — unlike an additive model, a very old but
-  /// highly-retrieved paper cannot dominate a recent, relevant result.
+  /// The constants enforce strict priority: Year > Repetition > Input Match.
+  /// Any 1-year difference always outranks any repetition advantage, and any
+  /// repetition advantage always outranks any keyword-overlap advantage.
   List<Map<String, String>> _applyBigMScoring(
       List<Map<String, String>> papers, String originalInput) {
-    // ── Exponent weights ────────────────────────────────────────────────────
-    const double alpha  = 0.4;   // input-match exponent
-    const double beta   = 0.6;   // repetition exponent
-    const double gamma  = 1.0;   // recency-decay exponent (dominant)
-    const double lambda = 0.1;   // exponential decay rate (per year)
+    const double bigMYear = 10000.0; // dominant
+    const double bigMRep = 100.0;   // secondary
+    const double bigMInput = 1.0;   // tertiary
 
     final int currentYear = DateTime.now().year;
 
@@ -4022,55 +3443,50 @@ Return valid JSON with this exact structure:
       final result = Map<String, String>.from(paper);
       final String citationLower = (paper['citation'] ?? '').toLowerCase();
 
-      // ── InputMatch: keyword overlap count, floored at 1 (smooth zero) ─────
-      final double rawInputMatch = inputKeywords.fold(
-          0.0,
-          (double sum, String kw) =>
-              sum + (citationLower.contains(kw) ? 1.0 : 0.0));
-      final double inputMatch = rawInputMatch + 1.0; // +1 floor → never 0
-
-      // ── Rep: cross-query retrieval count (always ≥ 1) ────────────────────
-      final double rep =
-          double.tryParse(paper['_rep_count'] ?? '1') ?? 1.0;
-
-      // ── RecencyDecay: exponential decay from current year ─────────────────
-      //   recencyDecay ∈ (0, 1]  — 1.0 for current year, decays with age
-      double recencyDecay = 0.5; // neutral default for unknown/missing year
+      // ── Year score: linear 0–100, newer paper = higher score ─────────────
+      double yearScore = 50.0; // neutral default when year is unknown
       final yearMatch = RegExp(r'\b((?:19|20|21)\d{2})\b')
           .firstMatch(paper['citation'] ?? '');
       if (yearMatch != null) {
         final int? y = int.tryParse(yearMatch.group(1) ?? '');
         if (y != null && y >= 1900 && y <= currentYear + 1) {
-          final double age =
-              (currentYear - y).toDouble().clamp(0.0, 200.0);
-          recencyDecay = math.exp(-lambda * age);
+          yearScore =
+              ((y - 1900) / (currentYear - 1900)).clamp(0.0, 1.0) * 100.0;
         }
       }
 
-      // ── Multiplicative power-law composite score ───────────────────────────
-      //   Score = (InputMatch^α) × (Rep^β) × (RecencyDecay^γ)
-      final double score =
-          math.pow(inputMatch,   alpha ).toDouble() *
-          math.pow(rep,          beta  ).toDouble() *
-          math.pow(recencyDecay, gamma ).toDouble();
+      // ── Repetition score: raw cross-query retrieval count ────────────────
+      final double repCount =
+          double.tryParse(paper['_rep_count'] ?? '1') ?? 1.0;
 
-      result['_big_m_score'] = score.toStringAsFixed(6);
-      result['_year_score']  = recencyDecay.toStringAsFixed(4); // decay value
-      result['_rep_count']   = rep.toStringAsFixed(0);
-      result['_input_match'] = rawInputMatch.toStringAsFixed(0);
+      // ── Input match score: keyword overlap with original user query ───────
+      final double inputMatchScore = inputKeywords.fold(
+          0.0,
+          (double sum, String kw) =>
+              sum + (citationLower.contains(kw) ? 1.0 : 0.0));
+
+      // ── Big M composite score ─────────────────────────────────────────────
+      final double bigMScore = (yearScore * bigMYear) +
+          (repCount * bigMRep) +
+          (inputMatchScore * bigMInput);
+
+      result['_big_m_score'] = bigMScore.toStringAsFixed(2);
+      result['_year_score'] = yearScore.toStringAsFixed(1);
+      result['_rep_count'] = repCount.toStringAsFixed(0);
+      result['_input_match'] = inputMatchScore.toStringAsFixed(0);
       return result;
     }).toList();
 
-    // Sort descending by composite score
+    // Sort descending by Big M score
     scored.sort((a, b) {
       final double aScore = double.tryParse(a['_big_m_score'] ?? '0') ?? 0.0;
       final double bScore = double.tryParse(b['_big_m_score'] ?? '0') ?? 0.0;
       return bScore.compareTo(aScore);
     });
 
-    print('DEBUG: Power-law scoring done. '
+    print('DEBUG: Big M scoring complete. '
         'Top score: ${scored.isNotEmpty ? scored.first['_big_m_score'] : "N/A"}, '
-        'Total: ${scored.length}');
+        'Total papers: ${scored.length}');
     return scored;
   }
 
@@ -5610,76 +5026,24 @@ RULES:
             'No findings provided.';
       });
 
-      // Fetch REAL papers — engine branch: Orange IQO or Omicron legacy
-      final String engineLabel =
-          _useOrangePipeline ? '[Orange IQO]' : '[Omicron Legacy]';
+      // Fetch REAL papers from academic APIs (sorted from latest to oldest)
       setState(() {
         _findings =
-            '$_findings\n\n$engineLabel Fetching academic papers...';
+            '$_findings\n\nFetching real academic papers from OpenAlex...';
       });
 
-      final String topic = _topicController.text.trim();
-      print('DEBUG: $engineLabel fetching papers for topic: $topic');
+      print(
+          'DEBUG: Starting to fetch real papers for topic: ${_topicController.text.trim()}');
 
       List<Map<String, String>> realPapers = [];
       try {
-        if (_useOrangePipeline) {
-          // ── Orange: full IQO pipeline ──────────────────────────────────
-          setState(() {
-            _findings = '$_findings\n$engineLabel Stage 1: Optimising query...';
-          });
-          String optimizedTopic = topic;
-          if (_selectedModel != null) {
-            try {
-              optimizedTopic = await _optimizeQueryWithLLM(topic);
-            } catch (_) {}
-          }
-
-          setState(() {
-            _findings =
-                '$_findings\n$engineLabel Stage 2: Generating 10 query variants...';
-          });
-          List<String> queries = [optimizedTopic];
-          if (_selectedModel != null) {
-            try {
-              final generated =
-                  await _generateMultipleQueries(optimizedTopic);
-              if (generated.isNotEmpty) queries = generated;
-            } catch (_) {}
-          }
-
-          final List<Map<String, String>> allRaw = [];
-          final int totalQ = queries.length.clamp(1, 10);
-          for (int i = 0; i < totalQ; i++) {
-            setState(() {
-              _findings =
-                  '$_findings\n$engineLabel Stage 3: Search ${i + 1}/$totalQ...';
-            });
-            try {
-              allRaw.addAll(await _fetchRealPapers(queries[i]));
-            } catch (_) {}
-          }
-
-          setState(() {
-            _findings =
-                '$_findings\n$engineLabel Stage 4: Deduplicating ${allRaw.length} results...';
-          });
-          final deduped = _deduplicateAndCountRepetitions(allRaw);
-
-          setState(() {
-            _findings =
-                '$_findings\n$engineLabel Stage 5: Power-law scoring...';
-          });
-          realPapers = _applyBigMScoring(deduped, topic);
-          print(
-              'DEBUG: Orange IQO: ${allRaw.length} raw → ${realPapers.length} unique, scored');
-        } else {
-          // ── Omicron: legacy single fetch ───────────────────────────────
-          realPapers = await _fetchRealPapers(topic);
-          print('DEBUG: Omicron: Fetched ${realPapers.length} papers');
+        realPapers = await _fetchRealPapers(_topicController.text.trim());
+        print('DEBUG: Fetched ${realPapers.length} papers');
+        if (realPapers.isNotEmpty) {
+          print('DEBUG: First paper URL: ${realPapers[0]['url']}');
         }
       } catch (e) {
-        print('DEBUG: $engineLabel Error fetching papers: $e');
+        print('DEBUG: Error fetching papers: $e');
       }
 
       setState(() {
@@ -5738,7 +5102,7 @@ RULES:
             'No findings provided.';
       });
 
-      // Auto-import papers from literature overview to database grouped by topic
+      // Auto-import papers from literature review to database grouped by topic
       if (_paperDetails.isNotEmpty) {
         _importSearchResultsToDatabase(_paperDetails,
             topic: _topicController.text.trim());

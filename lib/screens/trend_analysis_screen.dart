@@ -103,7 +103,7 @@ class _TrendAnalysisScreenState extends State<TrendAnalysisScreen> {
                 // Breadcrumb
                 Row(
                   children: [
-                    Text('ORANGE',
+                    Text('Omicron',
                         style: GoogleFonts.interTight(
                             fontSize: 12,
                             color: AppTheme.textSecondary,

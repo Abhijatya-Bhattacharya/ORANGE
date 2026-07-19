@@ -138,7 +138,7 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                 // Breadcrumb
                 Row(
                   children: [
-                    Text('ORANGE',
+                    Text('Omicron',
                         style: GoogleFonts.interTight(
                             fontSize: 12,
                             color: AppTheme.textSecondary,

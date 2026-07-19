@@ -50,7 +50,7 @@ class PrismaFlowScreen extends StatelessWidget {
                 // Breadcrumb
                 Row(
                   children: [
-                    Text('ORANGE',
+                    Text('Omicron',
                         style: GoogleFonts.interTight(
                             fontSize: 12,
                             color: AppTheme.textSecondary,
