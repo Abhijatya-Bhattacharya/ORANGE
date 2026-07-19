@@ -1,0 +1,117 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=blue!60!black,
+  urlcolor=blue!60!black,
+  pdftitle={ORANGE: A Cross-Platform Research Discovery and PRISMA Workflow Assistant},
+  pdfauthor={Draft Manuscript}
+}
+
+\title{ORANGE: A Cross-Platform Research Discovery and PRISMA Workflow Assistant}
+\author{Draft Manuscript}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+ORANGE is a cross-platform Flutter application designed to support literature discovery, research curation, and structured review workflows. The system combines paper and patent search, local large-language-model assistance, dynamic questionnaire generation, curated research database management, PRISMA-based screening, and trend analysis into a single interactive interface. This draft manuscript presents the motivation, system architecture, main components, and intended research value of the platform. The application is implemented with a modern material interface and supports local model integration through Ollama, exportable datasets, and PDF generation for reporting.
+\end{abstract}
+
+\noindent\textbf{Keywords:} literature review, PRISMA, research workflow, Flutter, knowledge discovery, trend analysis, patents, LLM-assisted search
+
+\section{Introduction}
+The growth of digital scholarly content has made it increasingly difficult for researchers to identify relevant studies, maintain traceable screening decisions, and summarize evidence efficiently. Traditional systematic review workflows often rely on a combination of manual search queries, spreadsheet-based screening, and separate reporting tools. These steps are time-consuming and difficult to reproduce when the review corpus changes.
+
+ORANGE addresses this problem by combining discovery, curation, and reporting in one application. The system is centered on a research-paper data model that stores bibliographic metadata, keywords, abstract text, methodology, results, source information, topic labels, and PRISMA stage annotations. On top of that model, the application provides interactive search, database management, and visual trend analysis.
+
+\section{System Overview}
+The application is built in Flutter and targets multiple platforms from a shared codebase. Its interface uses a consistent visual theme and a tabbed workspace that separates major tasks into distinct views. The main application flow includes:
+\begin{itemize}[leftmargin=1.2em]
+  \item search and discovery of academic papers and patents,
+  \item an AI-driven questionnaire for refining the topic and search intent,
+  \item a curated research database with PRISMA-based screening states,
+  \item PRISMA flow visualization for reporting study selection,
+  \item trend analysis charts grouped by topic,
+  \item PDF and CSV export for downstream use.
+\end{itemize}
+
+The interface is designed to help a user move from broad discovery to structured review with minimal context switching. A local language model service can be connected through Ollama, allowing the application to generate summaries, search refinements, and report-ready text without requiring a remote hosted model.
+
+\section{Data Model}
+ORANGE uses a research-paper entity that captures the information needed during review and synthesis. Each record may contain:
+\begin{itemize}[leftmargin=1.2em]
+  \item title and author list,
+  \item publication year,
+  \item keywords,
+  \item abstract, methodology, and results text,
+  \item country, source, URL, and topic metadata,
+  \item PRISMA screening stage,
+  \item optional exclusion reason for rejected records.
+\end{itemize}
+
+This structure supports both bibliographic search and evidence synthesis. It also allows the same record to be displayed in the database, counted in the PRISMA flow diagram, and included in topic-based trend analysis.
+
+\section{Research Workflow}
+The workflow implemented in ORANGE is intended to mirror a lightweight systematic review process.
+
+\subsection{Discovery}
+The discovery layer supports academic database search and patent search. Search behavior can be tuned across different sources, including academic databases and patent repositories. The interface also supports query optimization, recent-versus-relevance sorting, and search-stage labeling.
+
+\subsection{Questionnaire-Guided Refinement}
+The app includes a dynamic AI questionnaire that asks a bounded sequence of topic-refinement questions. The goal is to transform a broad prompt into a more precise review objective and a better search query. This design is useful when the initial topic is underspecified.
+
+\subsection{Curation and Screening}
+After discovery, papers are stored in a curated database where users can assign PRISMA states such as identified, screened, eligible, included, or excluded. The database view supports filtering, sorting, grouping by topic, and export. Screening decisions may also include a reason for exclusion, which improves traceability.
+
+\subsection{Flow Reporting}
+The PRISMA flow summary view computes stage counts and displays the review pipeline in a visual diagram. This helps convert a set of paper records into a narrative of how the final synthesis set was formed.
+
+\subsection{Trend Analysis}
+The trend analysis screen aggregates the curated records into topic-level charts. It excludes rejected studies from the visualization and can optionally incorporate language-model-generated insights. The resulting view is intended to support high-level interpretation of the collected literature.
+
+\section{Implementation Notes}
+The implementation emphasizes a modular architecture. The main application file orchestrates search, state management, content generation, and export features, while specialized screens handle database curation and analytics. The codebase includes support for PDF generation, file selection, URL launching, local persistence, and platform-specific integration.
+
+The UI styling follows a restrained warm theme with a strong orange accent, neutral surfaces, and high-contrast typography. This gives the application a distinct identity while keeping the interface appropriate for long-form research work.
+
+\section{Expected Contributions}
+ORANGE is positioned as a practical assistant for researchers who need a unified workflow for discovery and review. Its main contributions are:
+\begin{enumerate}[leftmargin=1.2em]
+  \item a single cross-platform interface for papers, patents, and review artifacts,
+  \item PRISMA-aligned screening state management,
+  \item topic-aware database organization and trend visualization,
+  \item local LLM integration for privacy-aware assistance,
+  \item export support for reporting and archival use.
+\end{enumerate}
+
+\section{Limitations and Future Work}
+This draft system is best understood as a research-support tool rather than a fully automated review engine. Human oversight is still required for query design, study eligibility decisions, and synthesis interpretation. Future work could add stronger citation parsing, deduplication logic, collaborative review roles, richer bibliometric analytics, and tighter integration with reference managers.
+
+\section{Conclusion}
+ORANGE demonstrates how a Flutter-based application can unify research discovery, review curation, PRISMA tracking, and trend analysis in one coherent workflow. By combining local model support with structured paper management and exportable outputs, the system provides a foundation for faster and more reproducible literature review preparation.
+
+\begin{thebibliography}{9}
+\bibitem{prisma2020}
+Page, M. J., McKenzie, J. E., Bossuyt, P. M., et al. PRISMA 2020 statement: an updated guideline for reporting systematic reviews. \emph{BMJ}, 372:n71, 2021.
+
+\bibitem{flutter}
+Google. Flutter: Build apps for any screen. \url{https://flutter.dev/}
+
+\bibitem{ollama}
+Ollama. Local large language model inference platform. \url{https://ollama.com/}
+\end{thebibliography}
+
+\end{document}
