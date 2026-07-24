@@ -1,3 +1,2 @@
 # omicron - ORANGE
-COPYING PROHIBITED
-© G34 MSIT
+© G34 MSIT. Unauthorized copying is prohibited.
